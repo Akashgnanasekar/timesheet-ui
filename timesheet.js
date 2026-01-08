@@ -41,7 +41,7 @@ function getDigest(){
 
 function save(){
  getDigest().then(digest=>{
-  fetch("/_api/web/lists/getbytitle('Timesheet_GridData')/items",{
+  fetch("https://enoah.sharepoint.com/_api/web/lists/getbytitle('Timesheet_GridData')/items", {
    method:"POST",
    headers:{
     "Accept":"application/json;odata=verbose",
@@ -65,3 +65,4 @@ function save(){
   }).then(()=>alert("Saved in SharePoint!"));
  });
 }
+
