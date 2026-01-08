@@ -26,43 +26,63 @@ document.getElementById("app").innerHTML = `
 <button onclick="save()">Submit</button>
 `;
 
+// Auto calculate total
 ["mon","tue","wed","thu","fri"].forEach(id=>{
  document.getElementById(id).addEventListener("input",()=>{
-  total.value=(+mon.value||0)+(+tue.value||0)+(+wed.value||0)+(+thu.value||0)+(+fri.value||0);
+  total.value =
+    (+mon.value || 0) +
+    (+tue.value || 0) +
+    (+wed.value || 0) +
+    (+thu.value || 0) +
+    (+fri.value || 0);
  });
 });
 
+
+// Get SharePoint Form Digest
 function getDigest(){
- return fetch("/_api/contextinfo",{
-  method:"POST",
-  headers:{ "Accept":"application/json;odata=verbose" }
- }).then(r=>r.json()).then(d=>d.d.GetContextWebInformation.FormDigestValue);
+  return fetch("https://enoah.sharepoint.com/_api/contextinfo", {
+    method: "POST",
+    headers: {
+      "Accept": "application/json;odata=verbose"
+    },
+    credentials: "include"     // VERY IMPORTANT
+  })
+  .then(r => r.json())
+  .then(d => d.d.GetContextWebInformation.FormDigestValue);
 }
 
+
+// Save to SharePoint list
 function save(){
- getDigest().then(digest=>{
-  fetch("https://enoah.sharepoint.com/_api/web/lists/getbytitle('Timesheet_GridData')/items", {
-   method:"POST",
-   headers:{
-    "Accept":"application/json;odata=verbose",
-    "Content-Type":"application/json;odata=verbose",
-    "X-RequestDigest":digest
-   },
-   body:JSON.stringify({
-    "__metadata":{ "type":"SP.Data.Timesheet_x005f_GridDataListItem" },
-    "Client":client.value,
-    "Project":project.value,
-    "ResourceType":resource.value,
-    "BillingType":billing.value,
-    "WorkDescription":desc.value,
-    "Monday":mon.value,
-    "Tuesday":tue.value,
-    "Wednesday":wed.value,
-    "Thursday":thu.value,
-    "Friday":fri.value,
-    "Total":total.value
-   })
-  }).then(()=>alert("Saved in SharePoint!"));
- });
+  getDigest().then(digest => {
+    fetch("https://enoah.sharepoint.com/_api/web/lists/getbytitle('Timesheet_GridData')/items", {
+      method: "POST",
+      credentials: "include",     // VERY IMPORTANT
+      headers: {
+        "Accept": "application/json;odata=verbose",
+        "Content-Type": "application/json;odata=verbose",
+        "X-RequestDigest": digest
+      },
+      body: JSON.stringify({
+        "__metadata": { "type": "SP.Data.Timesheet_x005f_GridDataListItem" },
+        "Client": client.value,
+        "Project": project.value,
+        "ResourceType": resource.value,
+        "BillingType": billing.value,
+        "WorkDescription": desc.value,
+        "Monday": mon.value,
+        "Tuesday": tue.value,
+        "Wednesday": wed.value,
+        "Thursday": thu.value,
+        "Friday": fri.value,
+        "Total": total.value
+      })
+    })
+    .then(res => {
+      if(!res.ok) throw "Error saving data";
+      alert("Saved in SharePoint!");
+    })
+    .catch(err => alert("Error: " + err));
+  });
 }
-
